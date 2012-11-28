@@ -49,7 +49,8 @@ module.exports = function(grunt) {
     if (format === 'html') {
       var pageTpl = fs.readFileSync(path.resolve(assetsPath, 'page.tpl'), 'utf-8'),
         indexTpl = fs.readFileSync(path.resolve(assetsPath, 'index.tpl'), 'utf-8'),
-        cssFile = fs.readFileSync(path.resolve(assetsPath, 'bootstrap.css'), 'utf-8');
+        cssFile = fs.readFileSync(path.resolve(assetsPath, 'bootstrap.css'), 'utf-8'),
+        jsFile = fs.readFileSync(path.resolve(assetsPath, 'script.js'), 'utf-8');
     }
 
 
@@ -63,31 +64,36 @@ module.exports = function(grunt) {
     grunt.utils.async.forEach(files, function(file, done) {
       var code = grunt.file.read(file, 'utf-8').toString(),
         ast = parser.parse(code),
-        doc = formatter.format(ast, format == 'json' ? 'json' : 'markdown'),
+        doc = format === 'html' ? ast : formatter.format(ast, format == 'json' ? 'json' : 'markdown'),
         filePath = dest + path.sep + file + formatExts[format],
         indexPath = findIndex(filePath),
         cssFilePath = indexPath + path.sep + 'bootstrap.css',
         indexFilePath = indexPath + path.sep + 'index.html',
+        jsFilePath = indexPath + path.sep + 'script.js',
         funcs = [];
 
       ast.forEach(function(func) {
         funcs.push(func['function']);
       });
 
-      if (format !== 'json') {
-        var doc = grunt.template.process(tpl, {
+      if (/markdown|html/.test(format)) {
+        console.log("doc", doc[0]['source']);
+        doc = grunt.template.process(tpl, {
           title: title,
           body: doc,
           file: file,
           indexFile: indexFilePath,
-          cssFile: cssFilePath
+          cssFile: cssFilePath,
+          jsFile: jsFilePath,
+          marked: marked
         });
 
         if (format === 'html') {
           doc = grunt.template.process(pageTpl, {
-            content: marked.parse(doc),
+            content: doc,
             title: title,
-            cssFile: cssFilePath
+            cssFile: cssFilePath,
+            jsFile: jsFilePath
           });
 
           toc.push({
@@ -98,8 +104,7 @@ module.exports = function(grunt) {
         }
       }
       grunt.file.write(filePath, doc);
-
-         done(null);
+      done(null);
     }, function(err) {
       if (!err && format === 'html') {
         var out = marked.parse(grunt.template.process(indexTpl, {
@@ -109,11 +114,13 @@ module.exports = function(grunt) {
         out = grunt.template.process(pageTpl, {
           content: out,
           title: title,
-          cssFile: './bootstrap.css'
+          cssFile: './bootstrap.css',
+          jsFile: './script.js'
         });
 
         grunt.file.write(path.resolve(dest, 'index.html'), out);
         grunt.file.write(path.resolve(dest, 'bootstrap.css'), cssFile);
+        grunt.file.write(path.resolve(dest, 'script.js'), jsFile);
       }
     });
   });
