@@ -73,11 +73,10 @@ module.exports = function(grunt) {
         funcs = [];
 
       ast.forEach(function(func) {
-        funcs.push(func['function']);
+        func['function'] && funcs.push(func['function']);
       });
 
       if (/markdown|html/.test(format)) {
-        console.log("doc", doc[0]['source']);
         doc = grunt.template.process(tpl, {
           title: title,
           body: doc,
