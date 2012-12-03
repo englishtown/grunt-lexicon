@@ -5,25 +5,40 @@
 <p><a href="<%= indexFile %>">Back to Index</a></p>
 
 <%
-for (var i = 0; i < body.length; i++) {
-	var node = body[i];
+body.forEach(function(node, i) {
 	var comment = node['comment'];
-	var tags = comment['tags'];
+	if (!node['function']) {
+		return;
+	}
+
+	var tags = comment['tags'].reduce(function(a,c){
+		if (c['tag'] === 'param') {
+			a['params'].push(c);
+		} else if (/return[s]?/.test(c['tag'])) {
+			a['returns'].push(c);
+		} else {
+			a['others'].push(c);
+		}
+		return a;
+	}, {params:[], returns:[], others:[]});
 %>
-<h3><%= node['function'] %></h3>
+<h3><%= node['function'] ? node['function'] : node['sig'] %></h3>
 <div><%= marked.parse(comment['text']) %></div>
 
-<ul>
-<%
-for (var j = 0; j < tags.length; j++) {
-	var tag = tags[j];
-%>
-<li><%= tag['tag'] %> <% if (tag['type']) { %>{<%= tag['type'] %>} <% } %><%= tag['value'] %> <%= tag['description'] %></li>
+<% ['others', 'params', 'returns'].forEach(function(group) { %>
+<% if (group === 'params') { %>
+<h5>Params</h5>
 <% } %>
+<ul>
+<% tags[group].forEach(function(tag) { %>
+<li><%= tag['tag'] %> <% if (tag['type']) { %>{<em><%= tag['type'] %>}</em> <% } %><%= tag['value'] %> <%= tag['description'] %></li>
+<% }); %>
 </ul>
+<% }); %>
+
 <a class="toggle" href="#" data-target="source-<%= i %>">Show source</a>
 
 <div id='source-<%= i %>' data-state="close" class='hidden'>
 <pre class="pre-scrollable"><%= node['source'] %></pre>
 </div>
-<% } %>
+<% }); %>
