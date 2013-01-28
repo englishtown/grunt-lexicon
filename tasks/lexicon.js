@@ -37,9 +37,11 @@ module.exports = function(grunt) {
   // ==========================================================================
 
   grunt.registerMultiTask('lexicon', 'Your task description goes here.', function() {
-    var files = grunt.file.expandFiles(this.file.src),
-      dest = this.file.dest,
-      options = this.data.options || {},
+
+    var isV04 = "0.4" <= grunt.version,
+      files = (isV04 ? grunt.file.expand({filter: 'isFile'}, this.files[0].src) : grunt.file.expandFiles(this.file.src)),
+      dest = isV04 ? this.files[0].dest : this.file.dest,
+      options = (isV04 ? this.options() : this.data.options) || {},
       format = options.format || 'html',
       title = options.title || 'API',
       assetsPath = path.resolve(__dirname, '..', 'assets'),
@@ -61,7 +63,7 @@ module.exports = function(grunt) {
     rimraf.sync(dest);
     var toc = [];
 
-    grunt.utils.async.forEach(files, function(file, done) {
+    grunt.util.async.forEach(files, function(file, done) {
       var code = grunt.file.read(file, 'utf-8').toString(),
         ast = parser.parse(code),
         doc = format === 'html' ? ast : formatter.format(ast, format == 'json' ? 'json' : 'markdown'),
@@ -77,7 +79,7 @@ module.exports = function(grunt) {
       });
 
       if (/markdown|html/.test(format)) {
-        doc = grunt.template.process(tpl, {
+        var data = {
           title: title,
           body: doc,
           file: file,
@@ -85,15 +87,21 @@ module.exports = function(grunt) {
           cssFile: cssFilePath,
           jsFile: jsFilePath,
           marked: marked
-        });
+        };
+
+        data = isV04 ? {data: data} : data;
+        doc = grunt.template.process(tpl, data);
 
         if (format === 'html') {
-          doc = grunt.template.process(pageTpl, {
+          data = {
             content: doc,
             title: title,
             cssFile: cssFilePath,
             jsFile: jsFilePath
-          });
+          };
+
+          data = isV04 ? {data: data} : data;
+          doc = grunt.template.process(pageTpl, data);
 
           toc.push({
             path: file + formatExts[format],
@@ -106,16 +114,23 @@ module.exports = function(grunt) {
       done(null);
     }, function(err) {
       if (!err && format === 'html') {
-        var out = marked.parse(grunt.template.process(indexTpl, {
+        var data = {
           title: title,
           toc: toc
-        }));
-        out = grunt.template.process(pageTpl, {
+        };
+        data = isV04 ? {data: data} : data;
+
+        var out = marked.parse(grunt.template.process(indexTpl, data));
+
+        data = {
           content: out,
           title: title,
           cssFile: './bootstrap.css',
           jsFile: './script.js'
-        });
+        };
+        data = isV04 ? {data: data} : data;
+
+        out = grunt.template.process(pageTpl, data);
 
         grunt.file.write(path.resolve(dest, 'index.html'), out);
         grunt.file.write(path.resolve(dest, 'bootstrap.css'), cssFile);
