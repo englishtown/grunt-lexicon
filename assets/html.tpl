@@ -7,6 +7,8 @@
 <%
 body.forEach(function(node, i) {
 	var comment = node['comment'];
+	var isPrivate = false;
+
 	if (!node['function']) {
 		return;
 	}
@@ -18,11 +20,14 @@ body.forEach(function(node, i) {
 			a['returns'].push(c);
 		} else {
 			a['others'].push(c);
+			if ((/private/i).test(c['tag']) || c['tag'] === 'access' && (/private/i).test(c['value'])){
+				isPrivate = true;
+			}
 		}
 		return a;
 	}, {params:[], returns:[], others:[]});
 %>
-<h3><%= node['function'] ? node['function'] : node['sig'] %></h3>
+<h3><%= node['function'] ? node['function'] : node['sig'] %><% if (isPrivate) { %> <small>Private</small><% } %></h3>
 <div><%= marked.parse(comment['text']) %></div>
 
 <% ['others', 'params', 'returns'].forEach(function(group) { %>
