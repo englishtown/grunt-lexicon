@@ -31,7 +31,7 @@ body.forEach(function(node, i) {
 <% } %>
 <ul>
 <% tags[group].forEach(function(tag) { %>
-<li><%= tag['tag'] %> <% if (tag['type']) { %>{<em><%= tag['type'] %>}</em> <% } %><%= tag['value'] %> <%= tag['description'] %></li>
+<li><%= tag['tag'] %> <% if (tag['type']) { %>{<em><%= tag['type'] %>}</em> <% } %><% if (group == 'params') { %><strong><% } %><%= tag['value'] %><% if (group == 'params') { %></strong><% } %> <%= tag['description'] %></li>
 <% }); %>
 </ul>
 <% }); %>
