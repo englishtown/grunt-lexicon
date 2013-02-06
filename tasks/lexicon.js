@@ -46,7 +46,8 @@ module.exports = function(grunt) {
       title = options.title || 'API',
       assetsPath = path.resolve(__dirname, '..', 'assets'),
       tplName = format === 'html' ? 'html.tpl' : 'md.tpl',
-      tpl = fs.readFileSync(path.resolve(assetsPath, tplName), 'utf-8');
+      tpl = fs.readFileSync(path.resolve(assetsPath, tplName), 'utf-8'),
+      util = isV04 ? grunt.util : grunt.utils;
 
     if (format === 'html') {
       var pageTpl = fs.readFileSync(path.resolve(assetsPath, 'page.tpl'), 'utf-8'),
@@ -63,7 +64,7 @@ module.exports = function(grunt) {
     rimraf.sync(dest);
     var toc = [];
 
-    grunt.util.async.forEach(files, function(file, done) {
+    util.async.forEach(files, function(file, done) {
       var code = grunt.file.read(file, 'utf-8').toString(),
         ast = parser.parse(code),
         doc = format === 'html' ? ast : formatter.format(ast, format == 'json' ? 'json' : 'markdown'),
