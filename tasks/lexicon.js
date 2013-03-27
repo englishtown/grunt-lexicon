@@ -38,16 +38,15 @@ module.exports = function(grunt) {
 
   grunt.registerMultiTask('lexicon', 'Your task description goes here.', function() {
 
-    var isV04 = "0.4" <= grunt.version,
-      files = (isV04 ? grunt.file.expand({filter: 'isFile'}, this.files[0].src) : grunt.file.expandFiles(this.file.src)),
-      dest = isV04 ? this.files[0].dest : this.file.dest,
-      options = (isV04 ? this.options() : this.data.options) || {},
+    var files = grunt.file.expand({filter: 'isFile'}, this.files[0].src),
+      dest = this.files[0].dest,
+      options = this.options() || {},
       format = options.format || 'html',
       title = options.title || 'API',
       assetsPath = path.resolve(__dirname, '..', 'assets'),
       tplName = format === 'html' ? 'html.tpl' : 'md.tpl',
       tpl = fs.readFileSync(path.resolve(assetsPath, tplName), 'utf-8'),
-      util = isV04 ? grunt.util : grunt.utils;
+      util = grunt.util;
 
     if (format === 'html') {
       var pageTpl = fs.readFileSync(path.resolve(assetsPath, 'page.tpl'), 'utf-8'),
@@ -90,7 +89,7 @@ module.exports = function(grunt) {
           marked: marked
         };
 
-        data = isV04 ? {data: data} : data;
+        data = {data: data};
         doc = grunt.template.process(tpl, data);
 
         if (format === 'html') {
@@ -101,7 +100,7 @@ module.exports = function(grunt) {
             jsFile: jsFilePath
           };
 
-          data = isV04 ? {data: data} : data;
+          data = {data: data};
           doc = grunt.template.process(pageTpl, data);
 
           toc.push({
@@ -119,7 +118,7 @@ module.exports = function(grunt) {
           title: title,
           toc: toc
         };
-        data = isV04 ? {data: data} : data;
+        data = {data: data};
 
         var out = marked.parse(grunt.template.process(indexTpl, data));
 
@@ -129,7 +128,7 @@ module.exports = function(grunt) {
           cssFile: './bootstrap.css',
           jsFile: './script.js'
         };
-        data = isV04 ? {data: data} : data;
+        data = {data: data};
 
         out = grunt.template.process(pageTpl, data);
 
